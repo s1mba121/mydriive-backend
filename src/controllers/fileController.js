@@ -83,6 +83,31 @@ exports.getFilesByType = async (req, res) => {
     }
 };
 
+exports.downloadFile = async (req, res) => {
+    try {
+        const { fileId } = req.params;
+        const file = await File.findByPk(fileId);
+
+        if (!file) {
+            return res.status(404).json({ error: "File not found" });
+        }
+
+        // Проверяем, существует ли файл на диске
+        if (!fs.existsSync(file.path)) {
+            return res.status(404).json({ error: "File not found on server" });
+        }
+
+        res.download(file.path, file.name, (err) => {
+            if (err) {
+                console.error("Error sending file:", err);
+                res.status(500).json({ error: "Failed to send file" });
+            }
+        });
+    } catch (error) {
+        console.error("Error downloading file:", error);
+        res.status(500).json({ error: "Failed to download file" });
+    }
+};
 
 // Перемещение файла в корзину
 exports.moveToTrash = async (req, res) => {
